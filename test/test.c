@@ -1,7 +1,7 @@
 #include <libjsn.h>
 #include <stdio.h>
 
-const static char *JSON="{\"hello\": \"first line\\nsecond line\\nthird line\",\"yes\":{\"nice\":true, \"array\":[1.1,\"3\",-1.3,-23,\"\\tyes\\nasndfa\"]}}";
+const static char *JSON="{\"hello\": \"first line\\nsecond line\\nthird line\",\"yes\":{\"nice\":true, \"array\":[1.1,\"3\",-1.3,-23e2,0.3e+9,-2.1e2,\"\\tyes\\nasndfa\"]}}";
 
 
 int main(int argc, char *argv[])

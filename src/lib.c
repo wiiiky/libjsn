@@ -344,21 +344,54 @@ static inline const char *json_string_parse(char **ret, const char *data)
     return data + 1;
 }
 
-static inline int64_t pow_10(int p)
+static inline double pow_10(int p)
 {
-    int64_t sum = 1;
-    while (p-- > 0) {
+    double sum = 1;
+    while (p > 0) {
         sum *= 10;
+        p--;
+    }
+    while (p < 0) {
+        sum /= 10;
+        p++;
     }
     return sum;
+}
+
+
+static inline const char *json_int_parse(int64_t * integer,
+                                         const char *data)
+{
+    int sign = 1;
+    if (*data == '-') {
+        sign = -1;
+        data++;
+    } else if (*data == '+') {
+        data++;
+    }
+    const char *ptr = data;
+    int len = 0;
+    while (1) {
+        if (unlikely(*ptr == '\0')) {
+            return NULL;
+        } else if (isdigit(*ptr)) {
+            ptr++;
+            len++;
+        } else {
+            break;
+        }
+    }
+    int64_t sum = 0;
+    while (data < ptr) {
+        sum += (*data++ - '0') * pow_10(--len);
+    }
+    *integer = sign * sum;
+    return ptr;
 }
 
 static inline const char *json_number_parse(JSONNode ** node,
                                             const char *data)
 {
-    /*
-     * TODO e+...科学计数法
-     */
     int sign = 1;
     if (*data == '-') {
         sign = -1;
@@ -366,18 +399,22 @@ static inline const char *json_number_parse(JSONNode ** node,
     }
     const char *start = data;
     const char *dot = NULL;
+    const char *e = NULL;
     while (*data) {
         if (*data == '.') {
             if (dot != NULL) {
                 return NULL;
             }
             dot = data;
+        } else if (*data == 'e' || *data == 'E') {
+            e = data + 1;
+            break;
         } else if (!isdigit(*data)) {
             break;
         }
         data++;
     }
-    if (data <= start) {
+    if (*data == '\0' || data <= start) {
         return NULL;
     }
     if (dot == NULL) {
@@ -386,26 +423,33 @@ static inline const char *json_number_parse(JSONNode ** node,
     int len = dot - start - 1;
     int64_t integer = 0;
     while (start < dot) {
-        integer += (*start - '0') * pow_10(len);
-        len--;
-        start++;
+        integer += (*start++ - '0') * pow_10(len--);
     }
+    int64_t floating = 0;
     if (dot < data - 1) {       /* float */
         start = dot + 1;
         len = data - start;
         int j = len - 1;
-        int64_t floating = 0;
         while (start < data) {
             floating += (*start - '0') * pow_10(j);
             j--;
             start++;
         }
-        *node =
-            json_create_float(sign *
-                              ((double) integer +
-                               (double) floating / pow_10(len)));
+    }
+    double ret = sign * ((double) integer +
+                         (double) floating / pow_10(len));
+    if (e) {
+        int64_t inte;
+        if ((data = json_int_parse(&inte, e)) == NULL) {
+            return NULL;
+        }
+        double doublee = pow_10(inte);
+        ret *= doublee;
+    }
+    if ((int64_t) ret != ret) {
+        *node = json_create_float(ret);
     } else {
-        *node = json_create_int(sign * integer);
+        *node = json_create_int((int64_t) ret);
     }
     return data;
 }
