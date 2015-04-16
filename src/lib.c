@@ -297,29 +297,57 @@ static inline const char *json_array_parse(JSONNode * node,
 
 static inline const char *json_string_parse(char **ret, const char *data)
 {
-    /*
-     * TODO unicode and escaped string support
-     */
     if (unlikely(*data != '\"')) {
         return NULL;
     }
-    const char *ptr = data + 1;
-    const char *start = ptr;
+    char *ptr = (char *) ++data;
+    int len = 0;
     while (*ptr != '\"') {
         if (*ptr == '\0') {
             return NULL;
+        } else if (*ptr++ == '\\') {
+            ptr++;              /* Skip escaped quotes. */
         }
-        ptr++;
+        len++;
     }
-    *ret = strndup(start, ptr - start);
-    return ptr + 1;
+    char *out = (char *) malloc(sizeof(char) * len);    /* allocates enough memory for string */
+    ptr = out;
+    while (*data != '\"') {
+        if (*data != '\\') {
+            *ptr++ = *data++;
+        } else {
+            data++;
+            switch (*data) {
+            case 'b':
+                *ptr++ = '\b';
+                break;
+            case 'f':
+                *ptr++ = '\f';
+                break;
+            case 'n':
+                *ptr++ = '\n';
+                break;
+            case 'r':
+                *ptr++ = '\r';
+                break;
+            case 't':
+                *ptr++ = '\t';
+                break;
+            case 'u':          /* TODO unicode */
+            default:
+                *ptr++ = *data++;
+            }
+        }
+    }
+    *ptr = '\0';
+    *ret = out;
+    return data + 1;
 }
 
 static inline int64_t pow_10(int p)
 {
-    int i;
     int64_t sum = 1;
-    for (i = 0; i < p; i++) {
+    while (p-- > 0) {
         sum *= 10;
     }
     return sum;

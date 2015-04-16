@@ -1,12 +1,13 @@
 #include <libjsn.h>
 #include <stdio.h>
 
+const static char *JSON="{\"hello\": \"first line\\nsecond line\\nthird line\",\"yes\":{\"nice\":true, \"array\":[1.1,\"3\",-1.3,-23,\"\\tyes\\nasndfa\"]}}";
+
 
 int main(int argc, char *argv[])
 {
     JSONNode *root =
-        json_loads_from_data
-        ("{\"hello\": false,\"yes\":{\"nice\":true, \"array\":[1.1,\"3\",-1.3,-23]}}");
+        json_loads_from_data(JSON);
     if (root) {
         printf("success!\n");
         JSONNode *child = json_object_get(root, "hello");

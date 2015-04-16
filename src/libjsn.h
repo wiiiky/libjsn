@@ -92,17 +92,17 @@ extern "C" {
 
 
 /*
- * Parses JSON from a string, and returns a JSONNode with type JSON_TYPE_OBJECT you can interrogate
- */
+* Parses JSON from a string, and returns a JSONNode with type JSON_TYPE_OBJECT you can interrogate
+*/
     JSONNode *json_loads_from_data(const char *data);
 
 /*
- * Gets an element named as name from a json object
- */
+* Gets an element named as name from a json object
+*/
     JSONNode *json_object_get(JSONNode * node, const char *name);
 /*
- * Gets the string
- */
+* Gets the string
+*/
     const char *json_string_get(JSONNode * node);
     int64_t json_int_get(JSONNode * node);
     double json_float_get(JSONNode * node);

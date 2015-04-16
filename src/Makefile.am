@@ -23,7 +23,7 @@ libjsn_la_LDFLAGS =
 libjsn_la_LIBADD =
 
 
-libjsnsubincludedir=$(libjsn_includedir)/libjsn
+libjsnsubincludedir=$(includedir)/libjsn
 libjsnsubinclude_HEADERS= \
 	libjsn.h \
 	jlist.h
