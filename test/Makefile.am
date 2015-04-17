@@ -10,7 +10,8 @@ AM_CPPFLAGS = \
 AM_CFLAGS =\
 	 -Wall\
 	 -g \
-	 -I../src/
+	 -I../src/ \
+	 -std=gnu11
 
 AM_LDFLAGS = \
 	-L../src/ -ljsn

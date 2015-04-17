@@ -107,13 +107,6 @@ void json_node_set_name_take(JSONNode * node, char *name)
     node->name = name;
 }
 
-void json_node_set_name_with_len(JSONNode * node, const char *name,
-                                 unsigned int len)
-{
-    free(node->name);
-    node->name = strndup(name, len);
-}
-
 void json_node_free(JSONNode * node)
 {
     if (json_node_is_object(node) || json_node_is_array(node)) {
@@ -295,6 +288,55 @@ static inline const char *json_array_parse(JSONNode * node,
     return NULL;
 }
 
+/*
+ * 解析四个字节表示的16进制数
+ */
+static inline uint32_t parse_hex4(const char *str)
+{
+    unsigned int h = 0;
+    if (*str >= '0' && *str <= '9')
+        h += (*str) - '0';
+    else if (*str >= 'A' && *str <= 'F')
+        h += 10 + (*str) - 'A';
+    else if (*str >= 'a' && *str <= 'f')
+        h += 10 + (*str) - 'a';
+    else
+        return 0;
+    h = h << 4;
+    str++;
+    if (*str >= '0' && *str <= '9')
+        h += (*str) - '0';
+    else if (*str >= 'A' && *str <= 'F')
+        h += 10 + (*str) - 'A';
+    else if (*str >= 'a' && *str <= 'f')
+        h += 10 + (*str) - 'a';
+    else
+        return 0;
+    h = h << 4;
+    str++;
+    if (*str >= '0' && *str <= '9')
+        h += (*str) - '0';
+    else if (*str >= 'A' && *str <= 'F')
+        h += 10 + (*str) - 'A';
+    else if (*str >= 'a' && *str <= 'f')
+        h += 10 + (*str) - 'a';
+    else
+        return 0;
+    h = h << 4;
+    str++;
+    if (*str >= '0' && *str <= '9')
+        h += (*str) - '0';
+    else if (*str >= 'A' && *str <= 'F')
+        h += 10 + (*str) - 'A';
+    else if (*str >= 'a' && *str <= 'f')
+        h += 10 + (*str) - 'a';
+    else
+        return 0;
+    return h;
+}
+
+static const unsigned char firstByteMark[7] =
+    { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 static inline const char *json_string_parse(char **ret, const char *data)
 {
     if (unlikely(*data != '\"')) {
@@ -312,6 +354,7 @@ static inline const char *json_string_parse(char **ret, const char *data)
     }
     char *out = (char *) malloc(sizeof(char) * len);    /* allocates enough memory for string */
     ptr = out;
+    uint32_t uc, uc2;
     while (*data != '\"') {
         if (*data != '\\') {
             *ptr++ = *data++;
@@ -333,7 +376,47 @@ static inline const char *json_string_parse(char **ret, const char *data)
             case 't':
                 *ptr++ = '\t';
                 break;
-            case 'u':          /* TODO unicode */
+            case 'u':          /* UNICODE */
+                uc = parse_hex4(data + 1);
+                data += 4;      /* gets the unicode char */
+                if (uc == 0 || (uc >= 0xDC00 && uc <= 0xDFFF)) {
+                    goto ERROR;
+                } else if (uc >= 0xD800 && uc <= 0xDBFF) {
+                    if (data[1] != '\\' || data[2] != 'u') {
+                        goto ERROR; /* second-half is missing */
+                    }
+                    uc2 = parse_hex4(data + 3);
+                    data += 6;
+                    if (uc2 < 0xDC00 || uc2 > 0xDFFF) {
+                        goto ERROR; /* invalid second-half */
+                    }
+                    uc = 0x10000 + (((uc & 0x3FF) << 10) | (uc2 & 0x3FF));
+                }
+                len = 4;
+                if (uc < 0x80) {
+                    len = 1;
+                } else if (uc < 0x800) {
+                    len = 2;
+                } else if (uc < 0x10000) {
+                    len = 3;
+                }
+                ptr += len;
+                switch (len) {
+                case 4:
+                    *--ptr = ((uc | 0x80) & 0xBF);
+                    uc >>= 6;
+                case 3:
+                    *--ptr = ((uc | 0x80) & 0xBF);
+                    uc >>= 6;
+                case 2:
+                    *--ptr = ((uc | 0x80) & 0xBF);
+                    uc >>= 6;
+                case 1:
+                    *--ptr = (uc | firstByteMark[len]);
+                }
+                ptr += len;
+                data++;
+                break;
             default:
                 *ptr++ = *data++;
             }
@@ -342,8 +425,14 @@ static inline const char *json_string_parse(char **ret, const char *data)
     *ptr = '\0';
     *ret = out;
     return data + 1;
+  ERROR:
+    free(out);
+    return NULL;
 }
 
+/*
+ * 实现pow10，避免需要加入math.h
+ */
 static inline double pow_10(int p)
 {
     double sum = 1;
@@ -359,6 +448,9 @@ static inline double pow_10(int p)
 }
 
 
+/*
+ * 解析一个整数
+ */
 static inline const char *json_int_parse(int64_t * integer,
                                          const char *data)
 {
@@ -402,7 +494,7 @@ static inline const char *json_number_parse(JSONNode ** node,
     const char *e = NULL;
     while (*data) {
         if (*data == '.') {
-            if (dot != NULL) {
+            if (dot != NULL) {  /* 不能出现两个小数点  */
                 return NULL;
             }
             dot = data;

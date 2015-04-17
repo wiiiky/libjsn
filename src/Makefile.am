@@ -9,7 +9,8 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS =\
 	 -Wall\
-	 -g
+	 -g \
+	 -std=gnu11
 
 lib_LTLIBRARIES = libjsn.la
 

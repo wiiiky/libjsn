@@ -19,38 +19,35 @@
 #ifndef __LIB_JSN_H__
 #define __LIB_JSN_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "jlist.h"
 #include <inttypes.h>
 
 
-    typedef struct _JSONNode JSONNode;
+typedef struct _JSONNode JSONNode;
 
-    typedef enum {
-        JSON_TYPE_OBJECT,
-        JSON_TYPE_ARRAY,
-        JSON_TYPE_STRING,
-        JSON_TYPE_INT,
-        JSON_TYPE_FLOAT,
-        JSON_TYPE_TRUE,
-        JSON_TYPE_FALSE,
-        JSON_TYPE_NULL,
-    } JSONType;
+typedef enum {
+    JSON_TYPE_OBJECT,
+    JSON_TYPE_ARRAY,
+    JSON_TYPE_STRING,
+    JSON_TYPE_INT,
+    JSON_TYPE_FLOAT,
+    JSON_TYPE_TRUE,
+    JSON_TYPE_FALSE,
+    JSON_TYPE_NULL,
+} JSONType;
 
-    struct _JSONNode {
-        JSONType type;
-        union {
-            JList *children;    /* Children of OBJECT or ARRAY */
-            int64_t integer;
-            double floating;
-            char *string;
-        } data;
+struct _JSONNode {
+    JSONType type;
+    union {
+        JList *children;        /* Children of OBJECT or ARRAY */
+        int64_t integer;
+        double floating;
+        char *string;
+    } data;
 
-        char *name;             /* the name of item */
-    };
+    char *name;                 /* the name of item */
+};
 #define json_node_get_type(n)   ((n)->type)
 #define json_node_is_object(n)  (json_node_get_type(n)==JSON_TYPE_OBJECT)
 #define json_node_is_array(n)   (json_node_get_type(n)==JSON_TYPE_ARRAY)
@@ -67,49 +64,50 @@ extern "C" {
 /*
  * Creates JSONNode of different types
  */
-    JSONNode *json_create_object(void);
-    JSONNode *json_create_array(void);
-    JSONNode *json_create_int(int64_t integer);
-    JSONNode *json_create_float(double floating);
-    JSONNode *json_create_string(const char *data);
-    JSONNode *json_create_string_take(char *data);
-    JSONNode *json_create_string_with_len(const char *data,
-                                          unsigned int len);
-    JSONNode *json_create_true(void);
-    JSONNode *json_create_false(void);
-    JSONNode *json_create_null(void);
+JSONNode *json_create_object(void);
+JSONNode *json_create_array(void);
+JSONNode *json_create_int(int64_t integer);
+JSONNode *json_create_float(double floating);
+JSONNode *json_create_string(const char *data);
+JSONNode *json_create_string_take(char *data);
+JSONNode *json_create_string_with_len(const char *data, unsigned int len);
+JSONNode *json_create_true(void);
+JSONNode *json_create_false(void);
+JSONNode *json_create_null(void);
 
-    void json_node_free(JSONNode * node);
+void json_node_free(JSONNode * node);
 
-    void json_node_set_name(JSONNode * node, const char *name);
-    void json_node_set_name_take(JSONNode * node, char *name);
-    void json_node_set_name_with_len(JSONNode * node, const char *name,
-                                     unsigned int len);
+void json_node_set_name(JSONNode * node, const char *name);
+void json_node_set_name_take(JSONNode * node, char *name);
 
-    void json_node_append_child(JSONNode * node, JSONNode * child);
-    JList *json_node_get_children(JSONNode * node);
+/*
+ * 添加子节点,node必须是object或者array
+ */
+void json_node_append_child(JSONNode * node, JSONNode * child);
+JList *json_node_get_children(JSONNode * node);
 
 
 
 /*
 * Parses JSON from a string, and returns a JSONNode with type JSON_TYPE_OBJECT you can interrogate
 */
-    JSONNode *json_loads_from_data(const char *data);
+JSONNode *json_loads_from_data(const char *data);
 
 /*
-* Gets an element named as name from a json object
+* 获取object的子内容
 */
-    JSONNode *json_object_get(JSONNode * node, const char *name);
+JSONNode *json_object_get(JSONNode * node, const char *name);
 /*
-* Gets the string
+* 获取字符串内容
 */
-    const char *json_string_get(JSONNode * node);
-    int64_t json_int_get(JSONNode * node);
-    double json_float_get(JSONNode * node);
+const char *json_string_get(JSONNode * node);
+/*
+ * 获取整数内容
+ */
+int64_t json_int_get(JSONNode * node);
+/*
+ * 获取浮点数内容
+ */
+double json_float_get(JSONNode * node);
 
-    const char *json_get_error(void);
-
-#ifdef __cplusplus
-}
-#endif
 #endif
