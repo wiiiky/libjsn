@@ -21,6 +21,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+
 
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
@@ -180,6 +185,28 @@ JSONNode *json_loads_from_data(const char *data)
     return obj;
 }
 
+JSONNode *json_loads_from_file(const char *path)
+{
+    int fd = open(path, O_RDWR);
+    if (fd < 0) {
+        return NULL;
+    }
+    struct stat sbuf;
+    if (fstat(fd, &sbuf) < 0) {
+        close(fd);
+        return NULL;
+    }
+    unsigned int size = sbuf.st_size;
+    char *data =
+        (char *) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd,
+                      0);
+    data[size] = '\0';
+    close(fd);
+    JSONNode *node = json_loads_from_data(data);
+    munmap(data, size);
+    return node;
+}
+
 static inline const char *json_object_parse(JSONNode * node,
                                             const char *data)
 {
@@ -191,7 +218,9 @@ static inline const char *json_object_parse(JSONNode * node,
 
     while (c) {
         char *name = NULL;
-        if (c != '\"') {
+        if (c == '}') {
+            return data + 1;
+        } else if (c != '\"') {
             return NULL;
         }
         if ((data = json_string_parse(&name, data)) == NULL) {

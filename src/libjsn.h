@@ -93,6 +93,8 @@ JList *json_node_get_children(JSONNode * node);
 */
 JSONNode *json_loads_from_data(const char *data);
 
+JSONNode *json_loads_from_file(const char *path);
+
 /*
 * 获取object的子内容
 */

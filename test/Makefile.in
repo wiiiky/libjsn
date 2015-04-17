@@ -78,7 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = test-sample$(EXEEXT)
+noinst_PROGRAMS = test-sample$(EXEEXT) test-file$(EXEEXT)
 subdir = test
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -91,13 +91,16 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_test_sample_OBJECTS = test.$(OBJEXT)
-test_sample_OBJECTS = $(am_test_sample_OBJECTS)
-test_sample_LDADD = $(LDADD)
+am_test_file_OBJECTS = test-file.$(OBJEXT)
+test_file_OBJECTS = $(am_test_file_OBJECTS)
+test_file_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_test_sample_OBJECTS = test-sample.$(OBJEXT)
+test_sample_OBJECTS = $(am_test_sample_OBJECTS)
+test_sample_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -132,8 +135,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(test_sample_SOURCES)
-DIST_SOURCES = $(test_sample_SOURCES)
+SOURCES = $(test_file_SOURCES) $(test_sample_SOURCES)
+DIST_SOURCES = $(test_file_SOURCES) $(test_sample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -288,7 +291,10 @@ AM_LDFLAGS = \
 	-L../src/ -ljsn
 
 test_sample_SOURCES = \
-	test.c 
+	test-sample.c
+
+test_file_SOURCES = \
+	test-file.c
 
 all: all-am
 
@@ -334,6 +340,10 @@ clean-noinstPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+test-file$(EXEEXT): $(test_file_OBJECTS) $(test_file_DEPENDENCIES) $(EXTRA_test_file_DEPENDENCIES) 
+	@rm -f test-file$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_file_OBJECTS) $(test_file_LDADD) $(LIBS)
+
 test-sample$(EXEEXT): $(test_sample_OBJECTS) $(test_sample_DEPENDENCIES) $(EXTRA_test_sample_DEPENDENCIES) 
 	@rm -f test-sample$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_sample_OBJECTS) $(test_sample_LDADD) $(LIBS)
@@ -344,7 +354,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-file.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-sample.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -491,7 +502,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
+clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -563,8 +574,8 @@ uninstall-am:
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-local clean-noinstPROGRAMS cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
+	clean-libtool clean-noinstPROGRAMS cscopelist-am ctags \
+	ctags-am distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
@@ -576,9 +587,6 @@ uninstall-am:
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am
 
-
-clean-local:
-	rm -f *~ test-sample
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

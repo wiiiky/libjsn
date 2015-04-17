@@ -17,10 +17,11 @@ AM_LDFLAGS = \
 	-L../src/ -ljsn
 
 noinst_PROGRAMS= \
-	test-sample
+	test-sample \
+	test-file
 
 test_sample_SOURCES = \
-	test.c 
+	test-sample.c
 
-clean-local:
-	rm -f *~ test-sample
+test_file_SOURCES = \
+	test-file.c
