@@ -187,7 +187,7 @@ JSONNode *json_loads_from_data(const char *data)
 
 JSONNode *json_loads_from_file(const char *path)
 {
-    int fd = open(path, O_RDWR);
+    int fd = open(path, O_RDONLY);
     if (fd < 0) {
         return NULL;
     }
@@ -200,8 +200,11 @@ JSONNode *json_loads_from_file(const char *path)
     char *data =
         (char *) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd,
                       0);
-    data[size] = '\0';
     close(fd);
+    if (data == MAP_FAILED) {   /* MAP_FAILED = (void*)-1 */
+        return NULL;
+    }
+    data[size++] = '\0';
     JSONNode *node = json_loads_from_data(data);
     munmap(data, size);
     return node;
