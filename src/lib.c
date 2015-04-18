@@ -18,6 +18,7 @@
  */
 
 #include "libjsn.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -30,12 +31,19 @@
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 
+/*
+ * 添加子节点
+ */
+static inline void json_node_append_child(JSONNode * node,
+                                          JSONNode * child);
+
 
 static inline JSONNode *json_node_alloc(JSONType type)
 {
     JSONNode *node = (JSONNode *) malloc(sizeof(JSONNode));
     node->type = type;
     node->name = NULL;
+    node->data.children = NULL;
     return node;
 }
 
@@ -287,6 +295,9 @@ static inline const char *json_value_parse(JSONNode ** node,
     } else if (strncmp(data, "false", 5) == 0) {
         *node = json_create_false();
         data += 5;
+    } else if (strncmp(data, "null", 4) == 0) {
+        *node = json_create_null();
+        data += 4;
     } else {
         return NULL;
     }
@@ -651,4 +662,253 @@ double json_float_get(JSONNode * node)
         return 0;
     }
     return node->data.floating;
+}
+
+static inline JSONNode *json_node_alloc_with_name(JSONType type,
+                                                  const char *name)
+{
+    JSONNode *node = json_node_alloc(type);
+    json_node_set_name(node, name);
+    return node;
+}
+
+void json_object_put_string(JSONNode * node, const char *name,
+                            const char *string)
+{
+    JSONNode *child = json_node_alloc_with_name(JSON_TYPE_STRING, name);
+    child->data.string = strdup(string);
+    json_node_append_child(node, child);
+}
+
+void json_object_put_int(JSONNode * node, const char *name,
+                         int64_t integer)
+{
+    JSONNode *child = json_node_alloc_with_name(JSON_TYPE_INT, name);
+    child->data.integer = integer;
+    json_node_append_child(node, child);
+}
+
+void json_object_put_float(JSONNode * node, const char *name,
+                           double floating)
+{
+    JSONNode *child = json_node_alloc_with_name(JSON_TYPE_FLOAT, name);
+    child->data.floating = floating;
+    json_node_append_child(node, child);
+}
+
+void json_object_put_true(JSONNode * node, const char *name)
+{
+    JSONNode *child = json_node_alloc_with_name(JSON_TYPE_TRUE, name);
+    json_node_append_child(node, child);
+}
+
+void json_object_put_false(JSONNode * node, const char *name)
+{
+    JSONNode *child = json_node_alloc_with_name(JSON_TYPE_FALSE, name);
+    json_node_append_child(node, child);
+}
+
+void json_object_put_null(JSONNode * node, const char *name)
+{
+    JSONNode *child = json_node_alloc_with_name(JSON_TYPE_NULL, name);
+    json_node_append_child(node, child);
+}
+
+void json_object_put_array(JSONNode * node, const char *name,
+                           JSONNode * array)
+{
+    json_node_set_name(array, name);
+    json_node_append_child(node, array);
+}
+
+void json_object_put_object(JSONNode * node, const char *name,
+                            JSONNode * object)
+{
+    json_node_set_name(object, name);
+    json_node_append_child(node, object);
+}
+
+void json_array_add_string(JSONNode * node, const char *string)
+{
+    JSONNode *child = json_create_string(string);
+    json_node_append_child(node, child);
+}
+
+void json_array_add_int(JSONNode * node, int64_t integer)
+{
+    JSONNode *child = json_create_int(integer);
+    json_node_append_child(node, child);
+}
+
+void json_array_add_float(JSONNode * node, double floating)
+{
+    JSONNode *child = json_create_float(floating);
+    json_node_append_child(node, child);
+}
+
+void json_array_add_true(JSONNode * node)
+{
+    JSONNode *child = json_create_true();
+    json_node_append_child(node, child);
+}
+
+void json_array_add_false(JSONNode * node)
+{
+    JSONNode *child = json_create_false();
+    json_node_append_child(node, child);
+}
+
+void json_array_add_null(JSONNode * node)
+{
+    JSONNode *child = json_create_null();
+    json_node_append_child(node, child);
+}
+
+void json_array_add_object(JSONNode * node, JSONNode * object)
+{
+    json_node_append_child(node, object);
+}
+
+void json_array_add_array(JSONNode * node, JSONNode * array)
+{
+    json_node_append_child(node, array);
+}
+
+typedef struct {
+    char *data;
+    uint32_t len;
+    uint32_t max;
+} JSONString;
+static inline JSONString *json_string_new()
+{
+    JSONString *string = (JSONString *) malloc(sizeof(JSONString));
+    string->max = 512;
+    string->len = 0;
+    string->data = (char *) malloc(sizeof(char) * string->max);
+    return string;
+}
+
+static inline char *json_string_free(JSONString * string, int f)
+{
+    char *data = string->data;
+    data[string->len] = '\0';
+    free(string);
+    if (f) {
+        free(data);
+        return NULL;
+    }
+    return data;
+}
+
+static inline void json_string_append_len(JSONString * string,
+                                          const char *data, uint32_t len)
+{
+    while (string->len + len >= string->max - 1) {
+        string->max <<= 1;
+        string->data = (char *) realloc(string->data, string->max);
+    }
+    strncpy(string->data + string->len, data, len);
+    string->len += len;
+}
+
+static inline void json_string_append(JSONString * string,
+                                      const char *data)
+{
+    json_string_append_len(string, data, strlen(data));
+}
+
+static inline void json_string_append_int(JSONString * string,
+                                          int64_t integer)
+{
+    if (integer < 0) {
+        json_string_append_len(string, "-", 1);
+        integer = -integer;
+    }
+    char buf[32] = { 0 };
+    int i = 30;
+    for (; integer && i; --i, integer /= 10) {
+        buf[i] = "0123456789"[integer % 10];
+    }
+    json_string_append(string, buf + i + 1);
+}
+
+static inline void json_string_append_float(JSONString * string,
+                                            double floating)
+{
+    if (floating < 0) {
+        json_string_append_len(string, "-", 1);
+        floating = -floating;
+    }
+    char buf[64];
+    snprintf(buf, 64, "%g", floating);
+    json_string_append(string, buf);
+}
+
+static inline void json_node_to_string_internal(JSONNode * node,
+                                                JSONString * string)
+{
+    JSONType type = json_node_get_type(node);
+    JList *children = NULL;
+    switch (type) {
+    case JSON_TYPE_NULL:
+        json_string_append(string, "null");
+        break;
+    case JSON_TYPE_TRUE:
+        json_string_append(string, "true");
+        break;
+    case JSON_TYPE_FALSE:
+        json_string_append(string, "false");
+        break;
+    case JSON_TYPE_STRING:
+        json_string_append_len(string, "\"", 1);
+        json_string_append(string, node->data.string);
+        json_string_append_len(string, "\"", 1);
+        break;
+    case JSON_TYPE_INT:
+        json_string_append_int(string, node->data.integer);
+        break;
+    case JSON_TYPE_FLOAT:
+        json_string_append_float(string, node->data.floating);
+        break;
+    case JSON_TYPE_OBJECT:
+        children = node->data.children;
+        json_string_append(string, "{");
+        while (children) {
+            JSONNode *child = (JSONNode *) j_list_data(children);
+            json_string_append_len(string, "\"", 1);
+            json_string_append(string, json_node_get_name(child));
+            json_string_append_len(string, "\": ", 3);
+            json_node_to_string_internal(child, string);
+            children = j_list_next(children);
+            if (children) {
+                json_string_append_len(string, ", ", 2);
+            }
+        }
+        json_string_append(string, "}");
+        break;
+    case JSON_TYPE_ARRAY:
+        children = node->data.children;
+        json_string_append(string, "[");
+        while (children) {
+            JSONNode *child = (JSONNode *) j_list_data(children);
+            json_node_to_string_internal(child, string);
+            children = j_list_next(children);
+            if (children) {
+                json_string_append(string, ", ");
+            }
+        }
+        json_string_append(string, "]");
+        break;
+    }
+}
+
+/*
+ * serializes JSONNode to a JSON formatted string
+ * returns a new allocated string
+ */
+char *json_node_to_string(JSONNode * node)
+{
+    JSONString *string = json_string_new();
+    json_node_to_string_internal(node, string);
+    return json_string_free(string, 0);
 }

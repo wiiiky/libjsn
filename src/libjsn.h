@@ -83,16 +83,39 @@ void json_node_set_name_take(JSONNode * node, char *name);
 /*
  * 添加子节点,node必须是object或者array
  */
-void json_node_append_child(JSONNode * node, JSONNode * child);
+void json_object_put_string(JSONNode * node, const char *name,
+                            const char *string);
+void json_object_put_int(JSONNode * node, const char *name,
+                         int64_t integer);
+void json_object_put_float(JSONNode * node, const char *name,
+                           double floating);
+void json_object_put_true(JSONNode * node, const char *name);
+void json_object_put_false(JSONNode * node, const char *name);
+void json_object_put_null(JSONNode * node, const char *name);
+void json_object_put_array(JSONNode * node, const char *name,
+                           JSONNode * array);
+void json_object_put_object(JSONNode * node, const char *name,
+                            JSONNode * object);
+void json_array_add_string(JSONNode * node, const char *string);
+void json_array_add_int(JSONNode * node, int64_t integer);
+void json_array_add_float(JSONNode * node, double floating);
+void json_array_add_true(JSONNode * node);
+void json_array_add_false(JSONNode * node);
+void json_array_add_null(JSONNode * node);
+void json_array_add_object(JSONNode * node, JSONNode * object);
+void json_array_add_array(JSONNode * node, JSONNode * array);
+
+/* 获取子节点列表 */
 JList *json_node_get_children(JSONNode * node);
+#define json_node_get_children_length(n) \
+                    (j_list_length(json_node_get_children(n)))
 
 
 
 /*
-* Parses JSON from a string, and returns a JSONNode with type JSON_TYPE_OBJECT you can interrogate
+* Parses JSON, and returns a JSONNode with type JSON_TYPE_OBJECT you can interrogate
 */
 JSONNode *json_loads_from_data(const char *data);
-
 JSONNode *json_loads_from_file(const char *path);
 
 /*
@@ -111,5 +134,11 @@ int64_t json_int_get(JSONNode * node);
  * 获取浮点数内容
  */
 double json_float_get(JSONNode * node);
+
+/*
+ * serializes JSONNode to a JSON formatted string
+ * returns a new allocated string
+ */
+char *json_node_to_string(JSONNode * node);
 
 #endif

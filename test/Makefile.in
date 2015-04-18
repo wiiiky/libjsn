@@ -78,7 +78,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = test-sample$(EXEEXT) test-file$(EXEEXT)
+noinst_PROGRAMS = test-sample$(EXEEXT) test-file$(EXEEXT) \
+	test-generator$(EXEEXT)
 subdir = test
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -98,6 +99,9 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_test_generator_OBJECTS = test-generator.$(OBJEXT)
+test_generator_OBJECTS = $(am_test_generator_OBJECTS)
+test_generator_LDADD = $(LDADD)
 am_test_sample_OBJECTS = test-sample.$(OBJEXT)
 test_sample_OBJECTS = $(am_test_sample_OBJECTS)
 test_sample_LDADD = $(LDADD)
@@ -135,8 +139,10 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(test_file_SOURCES) $(test_sample_SOURCES)
-DIST_SOURCES = $(test_file_SOURCES) $(test_sample_SOURCES)
+SOURCES = $(test_file_SOURCES) $(test_generator_SOURCES) \
+	$(test_sample_SOURCES)
+DIST_SOURCES = $(test_file_SOURCES) $(test_generator_SOURCES) \
+	$(test_sample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -296,6 +302,9 @@ test_sample_SOURCES = \
 test_file_SOURCES = \
 	test-file.c
 
+test_generator_SOURCES = \
+    test-generator.c
+
 all: all-am
 
 .SUFFIXES:
@@ -344,6 +353,10 @@ test-file$(EXEEXT): $(test_file_OBJECTS) $(test_file_DEPENDENCIES) $(EXTRA_test_
 	@rm -f test-file$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_file_OBJECTS) $(test_file_LDADD) $(LIBS)
 
+test-generator$(EXEEXT): $(test_generator_OBJECTS) $(test_generator_DEPENDENCIES) $(EXTRA_test_generator_DEPENDENCIES) 
+	@rm -f test-generator$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_generator_OBJECTS) $(test_generator_LDADD) $(LIBS)
+
 test-sample$(EXEEXT): $(test_sample_OBJECTS) $(test_sample_DEPENDENCIES) $(EXTRA_test_sample_DEPENDENCIES) 
 	@rm -f test-sample$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_sample_OBJECTS) $(test_sample_LDADD) $(LIBS)
@@ -355,6 +368,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-file.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-sample.Po@am__quote@
 
 .c.o:

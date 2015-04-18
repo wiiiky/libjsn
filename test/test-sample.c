@@ -1,5 +1,6 @@
 #include <libjsn.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 const static char *JSON="{\"hello\": \"first line\\nsecond line\\nthird line\",\"yes\":{\"nice\":true, \"array\":[1.1,\"3\",-1.3,-23e2,0.3e+9,-2.1e2,\"\\tyes\\nasndfa\",\"\\u8bf7\\u628a\\u4f60\\u9700\\u8981\\u8f6c\\u6362\\u7684\\u5185\\u5bb9\\u7c98\\u8d34\\u5728\\u8fd9\\u91cc\\u3002\\u005b\\u0074\\u006f\\u006f\\u006c\\u002e\\u0063\\u0068\\u0069\\u006e\\u0061\\u007a\\u002e\\u0063\\u006f\\u006d\\u005d\"]}}";
 
@@ -42,6 +43,9 @@ int main(int argc, char *argv[])
                 children = j_list_next(children);
             }
         }
+        char *string=json_node_to_string(root);
+        printf("\n\n%s\n",string);
+        free(string);
         json_node_free(root);
     } else {
         printf("fail!\n");

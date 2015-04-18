@@ -18,10 +18,14 @@ AM_LDFLAGS = \
 
 noinst_PROGRAMS= \
 	test-sample \
-	test-file
+	test-file \
+	test-generator
 
 test_sample_SOURCES = \
 	test-sample.c
 
 test_file_SOURCES = \
 	test-file.c
+
+test_generator_SOURCES = \
+    test-generator.c
