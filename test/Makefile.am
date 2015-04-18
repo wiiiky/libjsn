@@ -5,16 +5,17 @@
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
-	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\"
+	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\" \
+	-DPACKAGE_TEST_DIR=\""$(top_srcdir)/test"\"
 
 AM_CFLAGS =\
 	 -Wall\
 	 -g \
-	 -I../src/ \
+	 -I"$(top_srcdir)/src" \
 	 -std=gnu11
 
 AM_LDFLAGS = \
-	-L../src/ -ljsn
+	-L"$(top_builddir)/src" -ljsn
 
 noinst_PROGRAMS= \
 	test-sample \
@@ -29,3 +30,12 @@ test_file_SOURCES = \
 
 test_generator_SOURCES = \
     test-generator.c
+
+TESTS = \
+    test-sample \
+    test-file \
+    test-generator
+
+dist_check_DATA = \
+    1.json
+
