@@ -206,7 +206,8 @@ JSONNode *json_loads_from_file(const char *path)
     }
     unsigned int size = sbuf.st_size;
     char *data =
-        (char *) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd,
+        (char *) mmap(NULL, size + 1, PROT_READ | PROT_WRITE, MAP_PRIVATE,
+                      fd,
                       0);
     close(fd);
     if (data == MAP_FAILED) {   /* MAP_FAILED = (void*)-1 */
