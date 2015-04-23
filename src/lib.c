@@ -801,6 +801,15 @@ static inline char *json_string_free(JSONString * string, int f)
     return data;
 }
 
+static inline void json_string_append_c(JSONString * string, char c)
+{
+    if (unlikely(string->len + 1 >= string->max - 1)) {
+        string->max <<= 1;
+        string->data = (char *) realloc(string->data, string->max);
+    }
+    string->data[string->len++] = c;
+}
+
 static inline void json_string_append_len(JSONString * string,
                                           const char *data, uint32_t len)
 {
@@ -815,7 +824,59 @@ static inline void json_string_append_len(JSONString * string,
 static inline void json_string_append(JSONString * string,
                                       const char *data)
 {
-    json_string_append_len(string, data, strlen(data));
+    unsigned int len = strlen(data);
+    int i;
+    char buf[8];
+    for (i = 0; i < len;) {
+        unsigned char c1 = data[i++], c2, c3, c4;
+        unsigned int point = c1;
+        if (c1 < 0x80) {
+            json_string_append_c(string, c1);
+            continue;
+        } else if (c1 < 0xC2 || c1 >= 0xF5) {
+            /* error */
+            continue;
+        }
+        json_string_append_len(string, "\\u", 2);
+        if (c1 < 0xE0) {
+            c2 = data[i++];
+            if ((c2 & 0xC0) != 0x80) {
+                /* error */
+                continue;
+            }
+            point = (c1 << 6) + c2 - 0x3080;
+        } else if (c1 < 0xF0) {
+            c2 = data[i++];
+            if ((c2 & 0xC0) != 0x80 || (c1 == 0xE0 && c2 < 0xA0)) {
+                /* error */
+                continue;
+            }
+            c3 = data[i++];
+            if ((c3 & 0xC0) != 0x80) {
+                /* error */
+                continue;
+            }
+            point = (c1 << 12) + (c2 << 6) + c3 - 0xE2080;
+        } else {
+            c2 = data[i++];
+            if ((c2 & 0xC0) != 0x80 || (c1 == 0xF0 && c2 < 0x90)
+                || (c1 == 0xF4 && c2 >= 0x90)) {
+                /* error */
+                continue;
+            }
+            c3 = data[i++];
+            if ((c3 & 0xC0) != 0x80) {
+                continue;
+            }
+            c4 = data[i++];
+            if ((c4 & 0xC0) != 0x80) {
+                continue;
+            }
+            point = (c1 << 18) + (c2 << 12) + (c3 << 6) + c4 - 0x3C82080;
+        }
+        snprintf(buf, sizeof(buf) / sizeof(char), "%04X", point);
+        json_string_append_len(string, buf, 4);
+    }
 }
 
 static inline void json_string_append_int(JSONString * string,
@@ -861,9 +922,9 @@ static inline void json_node_to_string_internal(JSONNode * node,
         json_string_append(string, "false");
         break;
     case JSON_TYPE_STRING:
-        json_string_append_len(string, "\"", 1);
+        json_string_append_c(string, '\"');
         json_string_append(string, node->data.string);
-        json_string_append_len(string, "\"", 1);
+        json_string_append_c(string, '\"');
         break;
     case JSON_TYPE_INT:
         json_string_append_int(string, node->data.integer);
@@ -873,10 +934,10 @@ static inline void json_node_to_string_internal(JSONNode * node,
         break;
     case JSON_TYPE_OBJECT:
         children = node->data.children;
-        json_string_append(string, "{");
+        json_string_append_c(string, '{');
         while (children) {
             JSONNode *child = (JSONNode *) j_list_data(children);
-            json_string_append_len(string, "\"", 1);
+            json_string_append_c(string, '\"');
             json_string_append(string, json_node_get_name(child));
             json_string_append_len(string, "\": ", 3);
             json_node_to_string_internal(child, string);
@@ -885,20 +946,20 @@ static inline void json_node_to_string_internal(JSONNode * node,
                 json_string_append_len(string, ", ", 2);
             }
         }
-        json_string_append(string, "}");
+        json_string_append_c(string, '}');
         break;
     case JSON_TYPE_ARRAY:
         children = node->data.children;
-        json_string_append(string, "[");
+        json_string_append_c(string, '[');
         while (children) {
             JSONNode *child = (JSONNode *) j_list_data(children);
             json_node_to_string_internal(child, string);
             children = j_list_next(children);
             if (children) {
-                json_string_append(string, ", ");
+                json_string_append_len(string, ", ", 2);
             }
         }
-        json_string_append(string, "]");
+        json_string_append_c(string, ']');
         break;
     }
 }

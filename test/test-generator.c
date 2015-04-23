@@ -13,8 +13,8 @@ int main(int argc, char *argv[])
     json_object_put_null(meta, "meta");
     json_object_put_object(root, "meta", meta);
     JSONNode *array = json_create_array();
-    json_object_put_array(meta, "array", array);
-    json_array_add_string(array, "hello world");
+    json_object_put_array(meta, "你好 数组", array);
+    json_array_add_string(array, "hello \u4e2d\u6587");
     json_array_add_string(array, "nice try");
     char *string = json_node_to_string(root);
     printf("%s\n", string);
