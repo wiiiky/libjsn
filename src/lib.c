@@ -968,7 +968,7 @@ static inline void json_node_to_string_internal(JSONNode * node,
  * serializes JSONNode to a JSON formatted string
  * returns a new allocated string
  */
-char *json_node_to_string(JSONNode * node)
+char *json_node_dumps(JSONNode * node)
 {
     JSONString *string = json_string_new();
     json_node_to_string_internal(node, string);

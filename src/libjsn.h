@@ -139,6 +139,6 @@ double json_float_get(JSONNode * node);
  * serializes JSONNode to a JSON formatted string
  * returns a new allocated string
  */
-char *json_node_to_string(JSONNode * node);
+char *json_node_dumps(JSONNode * node);
 
 #endif

@@ -1,8 +1,9 @@
 libjsn
 ========================
 
-一个C实现的JSON解析库，不依赖任何第三方库。
+一个 C 实现的 JSON 解析库，不依赖任何第三方库。
 
-我在设计[jacques](https://github.com/jacques-dev) 的配置文件格式时，发现它与JSON有点像。于是就先实现了一个JSON库。不过libjsn与jacques没有什么关系。
+我在设计[Jacques](https://github.com/jacques-server) 的配置文件格式时，
+发现它与 JSON 有点像。于是就先实现了一个 JSON 库。不过 libjsn 与 Jacques 没有什么关系。
 
 使用方法参见[wiki](https://github.com/wiiiky/libjsn/wiki) 

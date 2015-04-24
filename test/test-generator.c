@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     json_object_put_array(meta, "你好 数组", array);
     json_array_add_string(array, "hello \u4e2d\u6587");
     json_array_add_string(array, "nice try");
-    char *string = json_node_to_string(root);
+    char *string = json_node_dumps(root);
     printf("%s\n", string);
     free(string);
     json_node_free(root);

@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
         printf("fail to load %s\n",path);
         return -1;
     }
-    char *string=json_node_to_string(root);
+    char *string=json_node_dumps(root);
     printf("%s\n",string);
     free(string);
     json_node_free(root);
