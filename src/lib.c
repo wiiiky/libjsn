@@ -396,7 +396,7 @@ static inline const char *json_string_parse(char **ret, const char *data)
         }
         len++;
     }
-    char *out = (char *) malloc(sizeof(char) * len);    /* allocates enough memory for string */
+    char *out = (char *) malloc(sizeof(char) * (len + 1));  /* allocates enough memory for string */
     ptr = out;
     uint32_t uc, uc2;
     while (*data != '\"') {
@@ -459,11 +459,11 @@ static inline const char *json_string_parse(char **ret, const char *data)
                     *--ptr = (uc | firstByteMark[len]);
                 }
                 ptr += len;
-                data++;
                 break;
             default:
-                *ptr++ = *data++;
+                *ptr++ = *data;
             }
+            data++;
         }
     }
     *ptr = '\0';

@@ -6,7 +6,7 @@
         "unix":{
             "birthday":0,
             "version":5,
-            "motherland":"这是什么东西"
+            "motherland":"这是什\t\t么东西"
         },
         "good":null
     }
