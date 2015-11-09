@@ -3,11 +3,11 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 datarootdir=@datarootdir@
 datadir=@datadir@
-includedir=@includedir@/liblibjsn-0.1
+includedir=@includedir@/libjsn
 
-Name: liblibjsn
+Name: libjsn
 Description: Sample library created by Anjuta project wizard.
 Version: @VERSION@
 Requires: 
-Libs: -L${libdir} -llibjsn
+Libs: -L${libdir} -ljsn
 Cflags: -I${includedir}
